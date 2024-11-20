@@ -30,54 +30,38 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $data = $request->validate([
-            'name' =>'required|string',
-            'email' =>'required|email|unique:users',
-            'password'=>'required|min:6',
+        $validated = $request->validate([
+            'name' => 'required|max:255|string',
+            'email'=> 'required|max:255|email|unique:users,email',
+            'password' => 'required|confirmed|min:6'
         ]);
 
-        $user = User::create($data);
+        $validated['password'] = Hash::make($validated['password']);
 
-        event(new Registered($user));
+        $user=User::create($validated);
 
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-        return [
-            'user' => $user,
-            'token' => $token,
-        ];
+        return response()->json([
+            'data' => $user,
+            'access_token' => $user->createToken('api_token')->plainTextToken,
+            'token_type' => 'Bearer'
+        ], 201);
     }
 
     public function login(Request $request)
     {
-        $data = $request->validate([
-            'email' => 'required|email|exists:users,email',
-            'password' => 'required|min:6',
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
         ]);
-
-        // Lấy thông tin người dùng
-        $user = User::where('email', $data['email'])->first();
-
-        // Kiểm tra mật khẩu
-        if (!$user || !Hash::check($data['password'], $user->password)) {
-            return response([
-                'message' => 'Thông tin đăng nhập không chính xác.',
-            ], 401);
+        if(!Auth:: attempt($validated)){
+            return response()->json([
+                'message' => 'Login information invalid'
+            ],401);
         }
-
-        // Kiểm tra email đã xác minh hay chưa
-        if (!$user->hasVerifiedEmail()) {
-            return response([
-                'message' => 'Tài khoản chưa được xác minh email. Vui lòng kiểm tra hộp thư của bạn.',
-            ], 403);
-        }
-
-        // Tạo token xác thực
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response([
-            'user' => $user,
-            'token' => $token,
-        ], 200);
+        $user = User::where('email',$validated['email'])->first();
+        return response()->json([
+            'access_token' => $user->createToken('api_token') ->plainTextToken,
+            'token_type' => 'Bearer'
+        ]);
     }
 }
