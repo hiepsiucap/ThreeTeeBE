@@ -2,46 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreOrderRequest;
-use App\Http\Requests\UpdateOrderRequest;
-use App\Http\Resources\OrderCollection;
-use App\Http\Resources\OrderResource;
-use App\Models\Order;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Http\Resources\ProductCollection;
+use App\Http\Resources\ProductResource;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
-class OrderController extends Controller
+class ProductController extends Controller
 {
+    // Hiển thị danh sách sản phẩm
     public function index(Request $request)
     {
-        return new OrderCollection(Order::all());
+        return new ProductCollection(Product::all());
     }
 
-    public function show(Request $request, Order $order)
+    // Hiển thị chi tiết sản phẩm
+    public function show(Request $request, Product $product)
     {
-        return new OrderResource($order);
+        return new ProductResource($product);
     }
 
-    public function store(StoreOrderRequest $request)
+    // Thêm mới sản phẩm
+    public function store(StoreProductRequest $request)
     {
         $validated = $request->validated();
 
-        $order = Order::create($validated);
+        $product = Product::create($validated);
 
-        return new OrderResource($order);
+        return new ProductResource($product);
     }
 
-    public function update(UpdateOrderRequest $request, Order $order)
-    {   
+    // Cập nhật thông tin sản phẩm
+    public function update(UpdateProductRequest $request, Product $product)
+    {
         $validated = $request->validated();
 
-        $order->updated($validated);
+        $product->update($validated);
 
-        return new OrderResource($order);
-
+        return new ProductResource($product);
     }
-    public function destroy(Request $request,Order $order)
+
+    // Xóa sản phẩm
+    public function destroy(Request $request, Product $product)
     {
-        $order->delete();
+        $product->delete();
 
         return response()->noContent();
     }
